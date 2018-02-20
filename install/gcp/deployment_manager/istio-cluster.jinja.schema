@@ -40,14 +40,6 @@ properties:
       type: GCE_MACHINE_TYPE
       zoneProperty: zone
 
-  installIstioRelease:
-    type: string
-    description: Install Istio Release version.
-    default: 0.5.1
-    enum:
-      - 0.5.1
-      - 0.4.0
-
   enableBookInfoSample:
     type: boolean
     description: Add BookInfo Sample Application

@@ -22,5 +22,6 @@ import (
 func All() analysis.Analyzer {
 	return analysis.Combine("all",
 		&SampleAnalyzer{},
+		&CueSampleAnalyzer{},
 	)
 }

@@ -13,6 +13,7 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.1.0
 	contrib.go.opencensus.io/exporter/stackdriver v0.6.0
 	contrib.go.opencensus.io/exporter/zipkin v0.1.1
+	cuelang.org/go v0.0.11
 	fortio.org/fortio v1.3.0
 	github.com/DataDog/datadog-go v2.2.0+incompatible
 	github.com/Masterminds/sprig v2.14.1+incompatible // indirect
@@ -97,7 +98,7 @@ require (
 	github.com/lestrrat-go/jwx v0.9.0
 	github.com/lib/pq v1.1.1 // indirect
 	github.com/mitchellh/copystructure v1.0.0
-	github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible
@@ -126,7 +127,7 @@ require (
 	github.com/signalfx/gohistogram v0.0.0-20160107210732-1ccfd2ff5083 // indirect
 	github.com/signalfx/golib v1.1.6
 	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a // indirect
-	github.com/spf13/cobra v0.0.3
+	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.3.0
@@ -140,10 +141,11 @@ require (
 	go.uber.org/atomic v1.4.0
 	go.uber.org/multierr v1.1.0
 	go.uber.org/zap v1.10.0
-	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
+	golang.org/x/net v0.0.0-20190912160710-24e19bdeb0f2
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
-	golang.org/x/tools v0.0.0-20190524140312-2c0ae7006135
+	golang.org/x/tools v0.0.0-20190913181337-0240832f5c3d
 	google.golang.org/api v0.8.0
 	google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873
 	google.golang.org/grpc v1.23.0

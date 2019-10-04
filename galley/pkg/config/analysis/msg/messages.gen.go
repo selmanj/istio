@@ -48,6 +48,10 @@ var (
 	// SchemaValidationError defines a diag.MessageType for message "SchemaValidationError".
 	// Description: The resource has one or more schema validation errors.
 	SchemaValidationError = diag.NewMessageType(diag.Error, "IST0106", "The resource has one or more schema validation errors: %v")
+	
+	// GatewayOverlaps defines a diag.MessageType for message "GatewayOverlaps".
+	// Description: Gateway's server overlaps with another Gateway.
+	GatewayOverlaps = diag.NewMessageType(diag.Warning, "IST0107", "The gateway's server on port %d with host %s overlaps with %s with host %s. Only one will take effect.")
 )
 
 // NewInternalError returns a new diag.Message based on InternalError.
@@ -126,6 +130,7 @@ func NewGatewayPortNotOnWorkload(entry *resource.Entry, selector string, port in
 	)
 }
 
+<<<<<<< HEAD
 // NewIstioProxyVersionMismatch returns a new diag.Message based on IstioProxyVersionMismatch.
 func NewIstioProxyVersionMismatch(entry *resource.Entry, proxyVersion string, injectionVersion string) diag.Message {
 	return diag.NewMessage(
@@ -136,12 +141,37 @@ func NewIstioProxyVersionMismatch(entry *resource.Entry, proxyVersion string, in
 	)
 }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 // NewSchemaValidationError returns a new diag.Message based on SchemaValidationError.
 func NewSchemaValidationError(entry *resource.Entry, combinedErr error) diag.Message {
 	return diag.NewMessage(
 		SchemaValidationError,
 		originOrNil(entry),
 		combinedErr,
+=======
+=======
+>>>>>>> 359dc9d29... WIP: basic infra in place
+// NewMultipleGatewaysOverlapSameHostPort returns a new diag.Message based on MultipleGatewaysOverlapSameHostPort.
+func NewMultipleGatewaysOverlapSameHostPort(entry *resource.Entry, gateways string, hostnames string, port int) diag.Message {
+=======
+// NewGatewayOverlaps returns a new diag.Message based on GatewayOverlaps.
+func NewGatewayOverlaps(entry *resource.Entry, port uint32, host string, otherGateway string, otherHost string) diag.Message {
+>>>>>>> 76dc83754... WIP: Nearly done, but needs more tests
+	return diag.NewMessage(
+		GatewayOverlaps,
+		originOrNil(entry),
+		port,
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> d4b29dd37... WIP: Add new message, analyzer
+=======
+>>>>>>> 359dc9d29... WIP: basic infra in place
+=======
+		host,
+		otherGateway,
+		otherHost,
+>>>>>>> 76dc83754... WIP: Nearly done, but needs more tests
 	)
 }
 

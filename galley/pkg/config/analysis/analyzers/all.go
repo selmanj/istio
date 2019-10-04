@@ -31,6 +31,7 @@ func All() []analysis.Analyzer {
 		&auth.ServiceRoleBindingAnalyzer{},
 		&deprecation.FieldAnalyzer{},
 		&gateway.IngressGatewayPortAnalyzer{},
+		&gateway.GatewayOverlaps{},
 		&injection.Analyzer{},
 		&injection.VersionAnalyzer{},
 		&virtualservice.DestinationHostAnalyzer{},

@@ -1,0 +1,35 @@
+# Two identical Gateways, with the same selector, port, and host. Note that
+# despite being in separate namespaces, they still collide as the hosts field
+# has an implicit '*/' prefix.
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway
+  namespace: namespace1
+spec:
+  selector:
+    istio: ingressgateway 
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway2
+  namespace: namespace2
+spec:
+  selector:
+    istio: ingressgateway
+  # This is the same servers as bookinfo-gateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"

@@ -100,3 +100,18 @@ messages:
     args:
       - name: combinedErr
         type: error
+
+  - name: "GatewayOverlaps"
+    code: IST0107
+    level: Warning
+    description: "Gateway's server overlaps with another Gateway."
+    template: "The gateway's server on port %d with host %s overlaps with %s with host %s. Only one will take effect."
+    args:
+      - name: port
+        type: uint32
+      - name: host
+        type: string
+      - name: otherGateway
+        type: string
+      - name: otherHost
+        type: string

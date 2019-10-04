@@ -1,0 +1,95 @@
+# These look similar, but the selector selects two different gateways
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway
+spec:
+  selector:
+    istio: ingressgateway 
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway2
+spec:
+  selector:
+    my-app: my-ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+# These each select different namespaces
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  namespace: foobar
+  name: bookinfo-gateway3
+spec:
+  selector:
+    my-app: my-ingressgateway2
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "./*"
+---
+# These each select different namespaces
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  namespace: barbaz
+  name: bookinfo-gateway4
+spec:
+  selector:
+    my-app: my-ingressgateway2
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "./*"
+---
+# The hosts between the two following gateways is very close, but they do not overlap
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway5
+spec:
+  selector:
+    my-selector: my-ingressgateway3
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*.a.example.com"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway6
+spec:
+  selector:
+    my-selector: my-ingressgateway3
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*.b.example.com"

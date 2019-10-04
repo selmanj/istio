@@ -155,6 +155,44 @@ var testGrid = []testCase{
 		},
 	},
 	{
+		name: "gatewayOverlapAnalyzerChecksSelector",
+		inputFiles: []string{
+			"testdata/gateway-non-overlapping.yaml",
+		},
+		analyzer: &gateway.OverlappingAnalyzer{},
+		expected: []message{
+			// no messages, this test case verifies no false positives
+		},
+	},
+	{
+		name: "gatewayOverlappingServerHost",
+		inputFiles: []string{
+			"testdata/gateway-overlapping-server-host.yaml",
+		},
+		analyzer: &gateway.OverlappingAnalyzer{},
+		expected: []message{
+			{msg.GatewayOverlaps, "Gateway/bookinfo-gateway"},
+			{msg.GatewayOverlaps, "Gateway/bookinfo-gateway2"},
+		},
+	},
+	{
+		name: "gatewayOverlapAnalyzerChecksSelector",
+		inputFiles: []string{
+			"testdata/gateway-overlapping-server.yaml",
+		},
+		analyzer: &gateway.OverlappingAnalyzer{},
+		expected: []message{
+			{msg.GatewayOverlaps, "Gateway/namespace1/bookinfo-gateway"},
+			{msg.GatewayOverlaps, "Gateway/namespace2/bookinfo-gateway2"},
+		},
+	},
+	{
+		name: "deprecation",
+		inputFiles: []string{
+			"testdata/deprecation.yaml",
+		},
+	},
+	{
 		name:       "virtualServiceGateways",
 		inputFiles: []string{"testdata/virtualservice_gateways.yaml"},
 		analyzer:   &virtualservice.GatewayAnalyzer{},

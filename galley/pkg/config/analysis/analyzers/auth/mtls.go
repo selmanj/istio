@@ -15,10 +15,12 @@
 package auth
 
 import (
+	"fmt"
+
 	"istio.io/istio/galley/pkg/config/analysis"
+	"istio.io/istio/galley/pkg/config/analysis/analyzers/util"
 	"istio.io/istio/galley/pkg/config/meta/metadata"
 	"istio.io/istio/galley/pkg/config/meta/schema/collection"
-	"istio.io/istio/galley/pkg/config/resource"
 	"istio.io/istio/security/proto/authentication/v1alpha1"
 )
 
@@ -44,23 +46,52 @@ func (s *MTLSAnalyzer) Analyze(ctx analysis.Context) {
 	//
 	// See istio.io/istio/pilot/pkg/model.AuthenticationPolicyForWorkload for
 	// reference for how auth policy is resolved in practice.
+	//
+	// For a given service/port combination, we need to figure out two things.
+	// 1) Is there an authn policy that enforces strict MTLS on this service?
+	// 2) If yes, is there a destination rule (or lack of rule) that does not enforce
+	// strict MTLS on this service?
+	//
+	// To calculate 1, we must resolve which policy applies to the service by
+	// looking at policies that target services, namespaces, and the mesh (in
+	// that order). The first match found is the policy that is enforced.
+	//
+	// To calculate 2, we must also resolve which destination rule takes effect.
+	// The ordering for resolving a matching destination rule is:
+	// 1) Destination rules in the source namespace
+	// 2) Destination rules in the destination namespace
+	// 3) Destination rules in istio-system
 
-	if r := ctx.Find(metadata.IstioAuthenticationV1Alpha1Meshpolicies, resource.NewName("", "default")); r != nil {
-		meshPolicy := r.Item.(*v1alpha1.Policy)
-		globalMTLSPolicy = CheckPolicyEnforcesMTLS(r.Metadata, meshPolicy)
-	}
+	// if r := ctx.Find(metadata.IstioAuthenticationV1Alpha1Meshpolicies, resource.NewName("", "default")); r != nil {
+	// 	meshPolicy := r.Item.(*v1alpha1.Policy)
+	// }
 
-	// Now collect all policies
-	var policies []*v1alpha1.Policy
-	ctx.ForEach(metadata.IstioAuthenticationV1Alpha1Policies, func(r *resource.Entry) bool {
+	// // Now collect all policies
+	// var policies []*v1alpha1.Policy
+	// ctx.ForEach(metadata.IstioAuthenticationV1Alpha1Policies, func(r *resource.Entry) bool {
 
-		return true
-	})
+	// 	return true
+	// })
 }
 
-type mTLSWorkload struct {
-	name string
-	port uint32
+type workload struct {
+	fqdn string
+
+	// Both portNumber and portName cannot both be non-default values.
+	portNumber uint32
+	portName   string
+}
+
+func newWorkloadWithPortNumber(fqdn string, portNumber uint32) workload {
+	return workload{fqdn: fqdn, portNumber: portNumber}
+}
+
+func newWorkloadWithPortName(fqdn, portName string) workload {
+	return workload{fqdn: fqdn, portName: portName}
+}
+
+func newWorkload(fqdn string) workload {
+	return workload{fqdn: fqdn}
 }
 
 type mTLSPolicyChecker struct {
@@ -68,23 +99,73 @@ type mTLSPolicyChecker struct {
 	meshHasStrictMTLSPolicy bool
 
 	namespaceHasStrictMTLSPolicy map[string]bool
-	workloadHasMTLSPolicy        map[mTLSWorkload]bool
+	workloadHasMTLSPolicy        map[workload]bool
 }
 
-func (pc *mTLSPolicyChecker) AddMeshPolicy(p *v1alpha1.Policy) {
-	pc.meshHasStrictMTLSPolicy = DoesPolicyEnforceMTLS(p)
+func newMTLSPolicyChecker() *mTLSPolicyChecker {
+	return &mTLSPolicyChecker{
+		namespaceHasStrictMTLSPolicy: make(map[string]bool),
+		workloadHasMTLSPolicy:        make(map[workload]bool),
+	}
 }
 
-func (pc *mTLSPolicyChecker) AddPolicy(m resource.Metadata, p *v1alpha1.Policy) {
-	if !DoesPolicyEnforceMTLS(p) {
-		return
+func (pc *mTLSPolicyChecker) addMeshPolicy(p *v1alpha1.Policy) {
+	pc.meshHasStrictMTLSPolicy = doesPolicyEnforceMTLS(p)
+}
+
+func (pc *mTLSPolicyChecker) addPolicy(namespace string, p *v1alpha1.Policy) error {
+	if !doesPolicyEnforceMTLS(p) {
+		return nil
 	}
 
-	// Discover the targetted workload and take note. Should normalize.
+	if len(p.Targets) == 0 {
+		// Rule targets the namespace.
+		pc.namespaceHasStrictMTLSPolicy[namespace] = true
+		return nil
+	}
+	// Discover the targeted workload and take note. Should normalize.
+	for _, target := range p.Targets {
+		fqdn := util.ConvertHostToFQDN(namespace, target.Name)
 
+		if len(target.Ports) == 0 {
+			// Policy targets all ports on workload
+			pc.workloadHasMTLSPolicy[newWorkload(fqdn)] = true
+		}
+
+		for _, port := range target.Ports {
+			if port.GetName() != "" {
+				pc.workloadHasMTLSPolicy[newWorkloadWithPortName(fqdn, port.GetName())] = true
+			} else if port.GetNumber() != 0 {
+				pc.workloadHasMTLSPolicy[newWorkloadWithPortNumber(fqdn, port.GetNumber())] = true
+			} else {
+				// Unhandled case!
+				return fmt.Errorf("policy has a port with no name/number for target %s", target.Name)
+			}
+		}
+	}
+
+	return nil
 }
 
-func DoesPolicyEnforceMTLS(p *v1alpha1.Policy) bool {
+func (pc *mTLSPolicyChecker) isServiceMTLSEnforced(namespace string, w workload) bool {
+	if pc.workloadHasMTLSPolicy[w] {
+		return true
+	}
+	// Try checking if its enforced on any ports
+	workloadNoPort := newWorkload(w.fqdn)
+	if pc.workloadHasMTLSPolicy[workloadNoPort] {
+		return true
+	}
+	// Check if enforced on namespace
+	// TODO consider using namespace in fqdn?
+	if pc.namespaceHasStrictMTLSPolicy[namespace] {
+		return true
+	}
+	// Finally, defer to mesh level policy
+	return pc.meshHasStrictMTLSPolicy
+}
+
+func doesPolicyEnforceMTLS(p *v1alpha1.Policy) bool {
 	if p.PeerIsOptional {
 		// Connection can still occur.
 		return false

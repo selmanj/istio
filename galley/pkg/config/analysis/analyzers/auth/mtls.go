@@ -177,8 +177,10 @@ func doesPolicyEnforceMTLS(p *v1alpha1.Policy) bool {
 			// Only looking for mtls methods
 			continue
 		}
-		// Check to see if it's permissive.
-		if mtlsParams.Mtls.AllowTls || mtlsParams.Mtls.Mode == v1alpha1.MutualTls_PERMISSIVE {
+
+		// The default value if no Mtls is specified on mtlsParams is strict.
+		// If we do have parameters, though, ensure they do not imply permissive mode.
+		if mtlsParams.Mtls != nil && (mtlsParams.Mtls.AllowTls || mtlsParams.Mtls.Mode == v1alpha1.MutualTls_PERMISSIVE) {
 			continue
 		}
 

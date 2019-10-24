@@ -1,7 +1,12 @@
 package auth
 
 import (
+	"bytes"
 	"testing"
+
+	"github.com/ghodss/yaml"
+
+	"github.com/golang/protobuf/jsonpb"
 
 	"istio.io/istio/security/proto/authentication/v1alpha1"
 )
@@ -10,7 +15,7 @@ func TestMTLSPolicyChecker(t *testing.T) {
 	tests := map[string]struct {
 		policies []struct {
 			namespace string
-			policy    *v1alpha1.Policy
+			policy    string
 		}
 		namespace string
 		workload  workload
@@ -25,31 +30,18 @@ func TestMTLSPolicyChecker(t *testing.T) {
 		"workload specific policy": {
 			policies: []struct {
 				namespace string
-				policy    *v1alpha1.Policy
+				policy    string
 			}{
 				{
 					namespace: "my-namespace",
-					policy: &v1alpha1.Policy{
-						Targets: []*v1alpha1.TargetSelector{
-							{
-								Name: "foobar.my-namespace.svc.cluster.local",
-								Ports: []*v1alpha1.PortSelector{
-									{
-										Port: &v1alpha1.PortSelector_Number{Number: 8080},
-									},
-								},
-							},
-						},
-						Peers: []*v1alpha1.PeerAuthenticationMethod{
-							{
-								Params: &v1alpha1.PeerAuthenticationMethod_Mtls{
-									Mtls: &v1alpha1.MutualTls{
-										Mode: v1alpha1.MutualTls_STRICT,
-									},
-								},
-							},
-						},
-					},
+					policy: `
+targets:
+- name: foobar
+  ports:
+  - number: 8080
+peers:
+- mtls:
+`,
 				},
 			},
 			workload: newWorkloadWithPortNumber("foobar.my-namespace.svc.cluster.local", 8080),
@@ -61,7 +53,17 @@ func TestMTLSPolicyChecker(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			pc := newMTLSPolicyChecker()
 			for _, p := range tc.policies {
-				pc.addPolicy(p.namespace, p.policy)
+				js, err := yaml.YAMLToJSON([]byte(p.policy))
+				if err != nil {
+					t.Fatalf("expected %v, got err parsing yaml: %v", tc.want, err)
+				}
+				var pb v1alpha1.Policy
+				err = jsonpb.Unmarshal(bytes.NewReader(js), &pb)
+				if err != nil {
+					t.Fatalf("expected %v, got err unmarshalling json: %v", tc.want, err)
+				}
+
+				pc.addPolicy(p.namespace, &pb)
 			}
 
 			got := pc.isServiceMTLSEnforced(tc.namespace, tc.workload)

@@ -147,22 +147,25 @@ func (pc *mTLSPolicyChecker) addPolicy(namespace string, p *v1alpha1.Policy) err
 	return nil
 }
 
-func (pc *mTLSPolicyChecker) isServiceMTLSEnforced(namespace string, w workload) bool {
+func (pc *mTLSPolicyChecker) isServiceMTLSEnforced(w workload) (bool, error) {
 	if pc.workloadHasMTLSPolicy[w] {
-		return true
+		return true, nil
 	}
 	// Try checking if its enforced on any ports
 	workloadNoPort := newWorkload(w.fqdn)
 	if pc.workloadHasMTLSPolicy[workloadNoPort] {
-		return true
+		return true, nil
 	}
 	// Check if enforced on namespace
-	// TODO consider using namespace in fqdn?
+	namespace, _ := util.GetResourceNameFromHost("", w.fqdn).InterpretAsNamespaceAndName()
+	if namespace == "" {
+		return false, fmt.Errorf("unable to extract namespace from fqdn: %s", w.fqdn)
+	}
 	if pc.namespaceHasStrictMTLSPolicy[namespace] {
-		return true
+		return true, nil
 	}
 	// Finally, defer to mesh level policy
-	return pc.meshHasStrictMTLSPolicy
+	return pc.meshHasStrictMTLSPolicy, nil
 }
 
 func doesPolicyEnforceMTLS(p *v1alpha1.Policy) bool {

@@ -64,6 +64,16 @@ yaml: foo
 `,
 		},
 	},
+	{
+		merged: `---
+yaml: foo
+`,
+		split: []string{
+			`
+yaml: foo
+`,
+		},
+	},
 }
 
 func TestSplit(t *testing.T) {

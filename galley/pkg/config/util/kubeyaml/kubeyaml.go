@@ -20,14 +20,17 @@ import (
 )
 
 const (
-	yamlSeparator = "---\n"
+	yamlSeparator = "\n---\n"
 )
 
 // Split the given yaml doc if it's multipart document.
 func Split(yamlText []byte) [][]byte {
 	parts := bytes.Split(yamlText, []byte(yamlSeparator))
 	var result [][]byte
-	for _, p := range parts {
+	for i, p := range parts {
+		if i != len(parts)-1 {
+			p = append(p, '\n')
+		}
 		if len(p) != 0 {
 			result = append(result, p)
 		}

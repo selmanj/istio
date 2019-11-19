@@ -238,6 +238,20 @@ func TestKubeSource_UnparseableResource(t *testing.T) {
 	g.Expect(actual[0]).To(Equal(data.EntryN1I1V1))
 }
 
+func TestKubeSource_CanHandleDocumentSeparatorInComments(t *testing.T) {
+	g := NewGomegaWithT(t)
+
+	s, _ := setupKubeSource()
+	s.Start()
+	defer s.Stop()
+
+	s.SetDefaultNamespace("default")
+
+	err := s.ApplyContent("foo", data.YamlI1V1WithCommentContainingDocumentSeparator)
+	g.Expect(err).To(BeNil())
+	g.Expect(s.ContentNames()).To(Equal(map[string]struct{}{"foo": {}}))
+}
+
 func TestKubeSource_NonStringKey(t *testing.T) {
 	g := NewGomegaWithT(t)
 
